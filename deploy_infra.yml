@@ -1,0 +1,29 @@
+---
+- name: Deploy Infrastructure onto OSP
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Create a server instance
+      os_server:
+        cloud: ospcloud
+        state: present
+        name: "{{ item.server_name }}"
+        image: rhel-guest
+        meta: "group={{ item.server_group }},deployment_name={{ item.deployment }}"
+        flavor: "{{ item.flavor_name }}"
+        security_groups: "{{ item.security_group }}"
+        key_name: ansible_ssh
+        nics:
+          - net-id: 2233a701-9bef-4315-b705-bd5b9648c51f
+          - net-id: 63121b37-539b-4cca-a833-9fb086a3f7b0
+        userdata: |
+          #!/bin/bash
+          curl -o /tmp/openstack.pub http://www.opentlc.com/download/ansible_bootcamp/openstack_keys/openstack.pub
+          cat /tmp/openstack.pub >> /home/cloud-user/.ssh/authorized_keys
+          curl -o /tmp/internal.repo http://www.opentlc.com/download/ansible_bootcamp/repo/internal.repo
+          cp /tmp/internal.repo /etc/yum.repos.d/internal.repo
+      with_items:
+        - { server_name: 'app2', flavor_name: 'm2.small', server_group: 'apps', security_group: 'apps', deployment: 'QA' }
+        - { server_name: 'app1', flavor_name: 'm2.small', server_group: 'apps', security_group: 'apps', deployment: 'QA' }
+        - { server_name: 'db', flavor_name: 'm2.small', server_group: 'appdbs', security_group: 'db', deployment: 'QA' }
+        - { server_name: 'frontend', flavor_name: 'm2.small', server_group: 'frontends', security_group: 'frontend', deployment: 'QA' }
